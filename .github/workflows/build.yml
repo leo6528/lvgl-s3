@@ -3,11 +3,11 @@ name: Build ESP32-S3 MicroPython + LVGL 9.6
 on:
   workflow_dispatch:
   push:
-    branches: [main]
+    branches: [master]
     paths:
       - 'lvgl-s3/**'
   pull_request:
-    branches: [main]
+    branches: [master]
     paths:
       - 'lvgl-s3/**'
 
