@@ -39,11 +39,11 @@ jobs:
           cd lv_micropython
           git submodule update --init --recursive user_modules/lv_binding_micropython
 
-      - name: Checkout LVGL v9.6.0 in submodule
+      - name: Checkout LVGL 9.6.x commit in submodule
         run: |
           cd lv_micropython/user_modules/lv_binding_micropython
-          git fetch --tags origin
-          git checkout v9.6.0
+          # Use commit known to work with LVGL 9.x (from local clone: 032dda4)
+          git checkout 032dda4
 
       - name: Configure lv_conf.h (LV_COLOR_DEPTH 16)
         run: |
