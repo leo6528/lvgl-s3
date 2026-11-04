@@ -27,17 +27,17 @@ jobs:
         with:
           submodules: false
 
-      - name: Clone lv_micropython (with submodule)
+      - name: Clone lv_micropython
         run: |
           git clone --recursive https://github.com/lvgl/lv_micropython.git lv_micropython
           cd lv_micropython
-          # Pin MicroPython to the commit known working with LVGL 9.x
-          git checkout 44aa2b19b5b7c4d4e8c8e8c8e8c8e8c8e8c8e8c8 2>/dev/null || true
+          # Pin MicroPython to the commit known working with LVGL 9.x (from local clone)
+          git checkout 44aa2b1 2>/dev/null || true
 
       - name: Checkout LVGL v9.6.0 in submodule
         run: |
           cd lv_micropython/user_modules/lv_binding_micropython
-          git fetch --tags
+          git fetch --tags origin
           git checkout v9.6.0
 
       - name: Configure lv_conf.h (LV_COLOR_DEPTH 16)
