@@ -29,10 +29,15 @@ jobs:
 
       - name: Clone lv_micropython
         run: |
-          git clone --recursive https://github.com/lvgl/lv_micropython.git lv_micropython
+          git clone --recurse-submodules https://github.com/lvgl/lv_micropython.git lv_micropython
           cd lv_micropython
-          # Pin MicroPython to the commit known working with LVGL 9.x (from local clone)
+          # Pin MicroPython to the commit known working with LVGL 9.x
           git checkout 44aa2b1 2>/dev/null || true
+
+      - name: Initialize and update LVGL submodule
+        run: |
+          cd lv_micropython
+          git submodule update --init --recursive user_modules/lv_binding_micropython
 
       - name: Checkout LVGL v9.6.0 in submodule
         run: |
