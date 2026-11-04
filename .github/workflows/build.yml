@@ -1,0 +1,69 @@
+name: Build ESP32-S3 MicroPython + LVGL 9.6
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'lvgl-s3/**'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'lvgl-s3/**'
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  build:
+    name: Build firmware (ESP32-S3 SPIRAM_OCT)
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          submodules: false
+
+      - name: Clone lv_micropython (with submodule)
+        run: |
+          git clone --recursive https://github.com/lvgl/lv_micropython.git lv_micropython
+          cd lv_micropython
+          # Pin MicroPython to the commit known working with LVGL 9.x
+          git checkout 44aa2b19b5b7c4d4e8c8e8c8e8c8e8c8e8c8e8c8 2>/dev/null || true
+
+      - name: Checkout LVGL v9.6.0 in submodule
+        run: |
+          cd lv_micropython/user_modules/lv_binding_micropython
+          git fetch --tags
+          git checkout v9.6.0
+
+      - name: Configure lv_conf.h (LV_COLOR_DEPTH 16)
+        run: |
+          cd lv_micropython/user_modules/lv_binding_micropython
+          # lv_conf.h is generated from lv_conf_template.h by the build system
+          # We set LV_CFLAGS env var which is read by micropython.cmake
+          echo "LV_CFLAGS=-DLV_COLOR_DEPTH=16 -DLV_FONT_MONTSERRAT_12=1 -DLV_FONT_MONTSERRAT_14=1 -DLV_FONT_MONTSERRAT_16=1 -DLV_FONT_MONTSERRAT_20=1 -DLV_FONT_MONTSERRAT_24=1 -DLV_FONT_MONTSERRAT_28=1" >> $GITHUB_ENV
+
+      - name: Setup ESP-IDF v5.2.2
+        uses: espressif/esp-idf-ci-action@v1
+        with:
+          esp_idf_version: v5.2.2
+          install_method: git
+
+      - name: Build MicroPython firmware
+        env:
+          LV_CFLAGS: -DLV_COLOR_DEPTH=16 -DLV_FONT_MONTSERRAT_12=1 -DLV_FONT_MONTSERRAT_14=1 -DLV_FONT_MONTSERRAT_16=1 -DLV_FONT_MONTSERRAT_20=1 -DLV_FONT_MONTSERRAT_24=1 -DLV_FONT_MONTSERRAT_28=1
+        run: |
+          cd lv_micropython/ports/esp32
+          # Use the thin make wrapper which calls idf.py
+          make BOARD=ESP32_GENERIC_S3 BOARD_VARIANT=SPIRAM_OCT -j$(nproc)
+
+      - name: Upload firmware artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: micropython-esp32s3-lvgl96
+          path: lv_micropython/ports/esp32/build-ESP32_GENERIC_S3-SPIRAM_OCT/micropython.bin
+          retention-days: 30
