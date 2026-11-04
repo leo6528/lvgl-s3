@@ -52,10 +52,10 @@ jobs:
           # We set LV_CFLAGS env var which is read by micropython.cmake
           echo "LV_CFLAGS=-DLV_COLOR_DEPTH=16 -DLV_FONT_MONTSERRAT_12=1 -DLV_FONT_MONTSERRAT_14=1 -DLV_FONT_MONTSERRAT_16=1 -DLV_FONT_MONTSERRAT_20=1 -DLV_FONT_MONTSERRAT_24=1 -DLV_FONT_MONTSERRAT_28=1" >> $GITHUB_ENV
 
-      - name: Setup ESP-IDF v5.5
+      - name: Setup ESP-IDF v5.2.2
         uses: espressif/esp-idf-ci-action@v1
         with:
-          esp_idf_version: v5.5
+          esp_idf_version: v5.2.2
 
       - name: Build MicroPython firmware
         env:
