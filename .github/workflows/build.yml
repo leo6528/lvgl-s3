@@ -19,7 +19,7 @@ jobs:
   build:
     name: Build firmware (ESP32-S3 SPIRAM_OCT)
     runs-on: ubuntu-latest
-    timeout-minutes: 60
+    timeout-minutes: 90
 
     steps:
       - name: Checkout repository
@@ -31,7 +31,6 @@ jobs:
         run: |
           git clone --recurse-submodules https://github.com/lvgl/lv_micropython.git lv_micropython
           cd lv_micropython
-          # Pin MicroPython to the commit known working with LVGL 9.x
           git checkout 44aa2b1 2>/dev/null || true
 
       - name: Initialize and update LVGL submodule
@@ -42,27 +41,32 @@ jobs:
       - name: Checkout LVGL 9.6.x commit in submodule
         run: |
           cd lv_micropython/user_modules/lv_binding_micropython
-          # Use commit known to work with LVGL 9.x (from local clone: 032dda4)
           git checkout 032dda4
 
-      - name: Configure lv_conf.h (LV_COLOR_DEPTH 16)
+      - name: Configure LV_CFLAGS
         run: |
-          cd lv_micropython/user_modules/lv_binding_micropython
-          # lv_conf.h is generated from lv_conf_template.h by the build system
-          # We set LV_CFLAGS env var which is read by micropython.cmake
           echo "LV_CFLAGS=-DLV_COLOR_DEPTH=16 -DLV_FONT_MONTSERRAT_12=1 -DLV_FONT_MONTSERRAT_14=1 -DLV_FONT_MONTSERRAT_16=1 -DLV_FONT_MONTSERRAT_20=1 -DLV_FONT_MONTSERRAT_24=1 -DLV_FONT_MONTSERRAT_28=1" >> $GITHUB_ENV
 
-      - name: Setup ESP-IDF v5.2.2
-        uses: espressif/esp-idf-ci-action@v1
-        with:
-          esp_idf_version: v5.2.2
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y git wget flex bison gperf python3 python3-pip python3-venv cmake ninja-build ccache libffi-dev libssl-dev dfu-util libusb-1.0-0
+
+      - name: Install ESP-IDF v5.2.2
+        run: |
+          cd $HOME
+          git clone -b v5.2.2 --recursive https://github.com/espressif/esp-idf.git esp-idf-v5.2.2
+          cd esp-idf-v5.2.2
+          ./install.sh esp32s3
+          echo "$HOME/esp-idf-v5.2.2" >> $GITHUB_PATH
+          echo "IDF_PATH=$HOME/esp-idf-v5.2.2" >> $GITHUB_ENV
 
       - name: Build MicroPython firmware
         env:
           LV_CFLAGS: -DLV_COLOR_DEPTH=16 -DLV_FONT_MONTSERRAT_12=1 -DLV_FONT_MONTSERRAT_14=1 -DLV_FONT_MONTSERRAT_16=1 -DLV_FONT_MONTSERRAT_20=1 -DLV_FONT_MONTSERRAT_24=1 -DLV_FONT_MONTSERRAT_28=1
         run: |
           cd lv_micropython/ports/esp32
-          # Use the thin make wrapper which calls idf.py
+          . $HOME/esp-idf-v5.2.2/export.sh
           make BOARD=ESP32_GENERIC_S3 BOARD_VARIANT=SPIRAM_OCT -j$(nproc)
 
       - name: Upload firmware artifact
