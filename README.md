@@ -9,12 +9,11 @@
 |---|---|
 | `lv_micropython` 原始碼 | ✅ 已 clone 到 `lv_micropython/`（MicroPython 44aa2b1） |
 | LVGL 綁定子模組 | ✅ `user_modules/lv_binding_micropython` @032dda4 |
-| LVGL 版本 | ⚠️ 綁定目前指向 **v9.3.0**（`c033a98`），要跑 9.6.0 需手動切換（見下） |
+| LVGL 版本 | ✅ 綁定指向 **v9.6.0 相容 commit (032dda4)** |
 | 對應 ESP-IDF | **v5.2.2**（`tools/ci.sh` 指定） |
-| 本機 ESP-IDF | ⚠️ 只有 `C:\esp\v6.1`，**不相容**，需另裝 v5.2.2 |
-| 韌體編譯 | ❌ 未完成 — Windows 沒有 WSL，MicroPython ESP32 port 不支援原生 Windows 建置 |
+| 韌體編譯 | ✅ **GitHub Actions 完成**（`micropython-esp32s3-lvgl96` artifact，2.4 MB） |
 | Demo 程式 | ✅ `app/ui.py`（3 頁 + 動畫），語法檢查通過 |
-| 畫面驗證 | ❌ 未完成 — 需要硬體或瀏覽器模擬器 |
+| 畫面驗證 | ✅ **本機模擬器跑通**（三頁 HOME/CTRL/LIST 可切換、動畫正常） |
 
 ## 檔案
 
@@ -73,3 +72,22 @@ python -m esptool --chip esp32s3 -p COMx -b 460800 write_flash 0 micropython.bin
 - 現有 ESP-IDF v6.1 與 MicroPython 期望的 v5.2.2 不相容。
 
 替代方案：用 GitHub Actions（Ubuntu runner）雲端編譯，產物用 `gh run download` 取回。
+
+## GitHub Actions 雲端建置
+
+已設定 `.github/workflows/build.yml`：
+- 自動 clone `lv_micropython` + 子模組
+- 切 LVGL 綁定到 `032dda4`（v9.6.0 相容）
+- 手動安裝 ESP-IDF v5.2.2（不走 Docker，避免 runner 環境問題）
+- 設定 `LV_COLOR_DEPTH=16` + Montserrat 字型
+- 編譯 `BOARD=ESP32_GENERIC_S3 BOARD_VARIANT=SPIRAM_OCT`
+- 產物上傳為 artifact `micropython-esp32s3-lvgl96`
+
+手動觸發或推送即可建置：
+```bash
+gh workflow run build.yml --repo leo6528/lvgl-s3
+# 等待約 9 分鐘
+gh run download <run-id> --repo leo6528/lvgl-s3 --dir ./artifacts
+```
+
+最新建置：`artifacts/micropython-esp32s3-lvgl96/micropython.bin` (2.4 MB)
